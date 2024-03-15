@@ -5,4 +5,5 @@ from django.conf import settings
 class CustomUser(AbstractUser):
     # Add additional fields for normal sign up
     # For example:
+    phone = models.IntegerField(unique=True,null=True)
     full_name = models.TextField(max_length=500, blank=True)
