@@ -97,3 +97,14 @@ class UserProfileEditView(RetrieveUpdateAPIView):
         if not obj:
             raise NotFound('User not found!')
         return obj
+    
+
+class LogoutView(APIView):
+    def post(self, request):
+        response = Response()
+        response.delete_cookie('jwt')
+        response.data = {
+            'message': 'Logout successful',
+            'status': True
+        }
+        return response
