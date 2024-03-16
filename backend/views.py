@@ -3,7 +3,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
-from .serializers import UserSerializer, LoginSerializer,UserViewSerializer
+from .serializers import UserSerializer,UserViewSerializer,UserProfileUpdateSerializer
 from django.contrib.auth import authenticate, login
 from rest_framework.authtoken.models import Token
 from .models import CustomUser
@@ -32,32 +32,38 @@ class SignUpView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+
 class LoginView(APIView):
     def post(self, request):
-        email = request.data.get('email')
-        password = request.data.get('password')
+        email = request.data['email']
+        password = request.data['password']
 
-        if not email or not password:
-            return Response({'error': 'Email and password are required.'}, status=status.HTTP_400_BAD_REQUEST)
+        user = CustomUser.objects.filter(email=email).first()
 
-        user = authenticate(email=email, password=password)
+        if user is None:
+            raise AuthenticationFailed('User not found!', 400)
 
-        if not user:
-            raise AuthenticationFailed('Invalid email or password.', 400)
+        if not user.check_password(password):
+            raise AuthenticationFailed('Incorrect password!', 400)
 
-        token = RefreshToken.for_user(user)
-        token_lifetime = datetime.timedelta(minutes=60)  # Token expiration time
-        token['exp'] = datetime.datetime.utcnow() + token_lifetime
-
-        response_data = {
+        payload = {
             'id': user.id,
-            'token': str(token.access_token),
-            'token_expiry': token['exp'],
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=60),
+            'iat': datetime.datetime.utcnow()
+        }
+
+        token = jwt.encode(payload, 'secret', algorithm='HS256')
+
+        response = Response()
+
+        response.set_cookie(key='jwt', value=token, httponly=True)
+        response.data = {
+            'id':user.id,
+            'token': token,
             'message': 'Login successful',
             'status': True
         }
-
-        return Response(response_data)
+        return response
     
 
 class UserView(APIView):
@@ -76,7 +82,7 @@ class UserView(APIView):
     
 class UserProfileEditView(RetrieveUpdateAPIView):
     queryset = CustomUser.objects.all()
-    serializer_class = UserSerializer
+    serializer_class = UserProfileUpdateSerializer
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
@@ -92,7 +98,6 @@ class UserProfileEditView(RetrieveUpdateAPIView):
 
     def get_object(self):
         queryset = self.filter_queryset(self.get_queryset())
-        # Only allow users to update their own profile
         obj = queryset.filter(id=self.kwargs.get('pk')).first()
         if not obj:
             raise NotFound('User not found!')

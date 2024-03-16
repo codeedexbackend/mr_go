@@ -2,6 +2,8 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import CustomUser
 from django.contrib.auth import authenticate
+from django.utils.text import slugify
+
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -32,24 +34,31 @@ class UserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         password = validated_data.pop('password', None)
         password2 = validated_data.pop('password2', None)
-        instance = self.Meta.model(**validated_data)
+        
+        email = validated_data.get('email')
+        
+        username = slugify(email.split('@')[0])
+        count = 1
+        while CustomUser.objects.filter(username=username).exists():
+            username = f"{slugify(email.split('@')[0])}_{count}"
+            count += 1
+        
+        instance = self.Meta.model(**validated_data, username=username)
 
         if password is not None:
             instance.set_password(password)
 
         instance.save()
         return instance
+
     
 class UserProfileUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['full_name', 'email', 'mobile']
+        fields = '__all__'
     
 class UserViewSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['id', 'username', 'email', 'mobile', 'full_name']
+        fields = '__all__'
 
-class LoginSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    password = serializers.CharField()
