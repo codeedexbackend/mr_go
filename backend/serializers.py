@@ -1,9 +1,7 @@
-from rest_framework import serializers
-from django.contrib.auth import get_user_model
-from .models import CustomUser
-from django.contrib.auth import authenticate
 from django.utils.text import slugify
+from rest_framework import serializers
 
+from .models import CustomUser, Contactus, ShippingRegistration
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -34,15 +32,15 @@ class UserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         password = validated_data.pop('password', None)
         password2 = validated_data.pop('password2', None)
-        
+
         email = validated_data.get('email')
-        
+
         username = slugify(email.split('@')[0])
         count = 1
         while CustomUser.objects.filter(username=username).exists():
             username = f"{slugify(email.split('@')[0])}_{count}"
             count += 1
-        
+
         instance = self.Meta.model(**validated_data, username=username)
 
         if password is not None:
@@ -51,14 +49,32 @@ class UserSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
-    
+
 class UserProfileUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = '__all__'
-    
+
+
 class UserViewSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = '__all__'
 
+
+class ContactusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Contactus
+        fields = '__all__'
+
+
+class ShippingRegSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ShippingRegistration
+        fields = '__all__'
+
+
+class ShippingRegUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ShippingRegistration
+        fields = '__all__'
