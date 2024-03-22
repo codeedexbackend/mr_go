@@ -24,6 +24,7 @@ class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
     mobile = models.CharField(max_length=15, null=True, blank=True, unique=True)
     full_name = models.CharField(max_length=150, null=True, blank=True)
+    username = models.CharField(max_length=40, null=True, blank=True)
     primary_address = models.CharField(max_length=250, null=True, blank=True)
     secondary_address = models.CharField(max_length=250, null=True, blank=True)
     city = models.CharField(max_length=30, null=True, blank=True)

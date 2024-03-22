@@ -9,7 +9,7 @@ from rest_framework.generics import RetrieveUpdateAPIView, ListAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import CustomUser, ShippingRegistration
+from .models import CustomUser, ShippingRegistration, Contactus
 from .serializers import (UserSerializer, UserViewSerializer, UserProfileUpdateSerializer, ContactusSerializer,
                           ShippingRegSerializer, ShippingRegUpdateSerializer)
 
@@ -94,6 +94,7 @@ class UserProfileEditView(RetrieveUpdateAPIView):
             raise NotFound('User not found!')
         return obj
 
+
 class UserDeleteView(APIView):
     def delete(self, request, pk):
         try:
@@ -130,6 +131,24 @@ class ContactUsView(APIView):
         }
         )
 
+
+class ContactUsGetView(APIView):
+    def get(self, request):
+        contact = Contactus.objects.all()
+        Contact = ContactusSerializer(contact, many=True)
+        return Response(Contact.data)
+
+class ContactUsDeleteView(APIView):
+    def delete(self, request, pk):
+        try:
+            instance = Contactus.objects.get(pk=pk)
+            instance.delete()
+            return Response({"message": "Message deleted successfully."},
+                            status=status.HTTP_204_NO_CONTENT)
+        except Contactus.DoesNotExist:
+            return Response({"message": "Message not found."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class ShippingRegView(APIView):
     def post(self, request):
