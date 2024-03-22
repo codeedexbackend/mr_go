@@ -24,6 +24,7 @@ class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
     mobile = models.CharField(max_length=15, null=True, blank=True, unique=True)
     full_name = models.CharField(max_length=150, null=True, blank=True)
+    username = models.CharField(max_length=40, null=True, blank=True)
     primary_address = models.CharField(max_length=250, null=True, blank=True)
     secondary_address = models.CharField(max_length=250, null=True, blank=True)
     city = models.CharField(max_length=30, null=True, blank=True)
@@ -50,7 +51,7 @@ class Contactus(models.Model):
 
 class ShippingRegistration(models.Model):
     objects = None
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE ,null=False)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=False)
     Shipping_choices = [
         ('TRACKON', 'TRACKON'),
         ('DTDC', 'DTDC'),
@@ -65,16 +66,16 @@ class ShippingRegistration(models.Model):
     Address = models.CharField(max_length=250, blank=False)
     Consignment_Choices = [
         ('Document', 'Document'),
-        ('Non Document', 'Non Document'),
+        ('Non-Document', 'Non-Document'),
     ]
 
-    Consignment = models.CharField(max_length=20, blank=False, choices=Consignment_Choices)
+    Consignment = models.CharField(max_length=20, blank=True, null=True, choices=Consignment_Choices)
     ContentType_Choices = [
-        ('ARTIFICIAL JWELLARY', 'ARTIFICIAL JWELLARY'),
+        ('ARTIFICIAL JWELLERY', 'ARTIFICIAL JWELLERY'),
         ('BAGS', 'BAGS'),
         ('BOOKS', 'BOOKS'),
         ('CLOTHING', 'CLOTHING'),
-        ('CORPORATE GIFTS', 'CORPORATE GIFTS'),
+        ('CORPORATE GIFTS (EG:MOMENTOES/WOODEN PLAQUES)', 'CORPORATE GIFTS (EG:MOMENTOES/WOODEN PLAQUES)'),
         ('LUGGAGE', 'LUGGAGE'),
         ('PERFUMES', 'PERFUMES'),
         ('PHOTO FRAME', 'PHOTO FRAME'),
@@ -82,8 +83,16 @@ class ShippingRegistration(models.Model):
         ('SHOES', 'SHOES'),
         ('SLIPPERS', 'SLIPPERS'),
     ]
-    Content_Type = models.CharField(max_length=20, blank=False, choices=ContentType_Choices)
-    Number_of_box = models.IntegerField(blank=False)
-    Declared_value = models.IntegerField(blank=False)
+    Content_Type = models.CharField(max_length=200, blank=True, null=True, choices=ContentType_Choices)
+    Number_of_box = models.CharField(max_length=20, blank=True, null=True)
+    Declared_value = models.CharField(max_length=20, blank=True, null=True)
     Booking_date = models.DateField(auto_now_add=True)
-    Delivery_date = models.DateField()
+    Delivery_date = models.DateField(null=True)
+
+    def save(self, *args, **kwargs):
+        if self.Consignment == 'Document':
+            # If consignment is 'Document', clear other fields
+            self.Number_of_box = None
+            self.Declared_value = None
+
+        super().save(*args, **kwargs)
