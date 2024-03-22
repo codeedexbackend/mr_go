@@ -94,6 +94,18 @@ class UserProfileEditView(RetrieveUpdateAPIView):
             raise NotFound('User not found!')
         return obj
 
+class UserDeleteView(APIView):
+    def delete(self, request, pk):
+        try:
+            instance = CustomUser.objects.get(pk=pk)
+            instance.delete()
+            return Response({"message": "User deleted successfully."},
+                            status=status.HTTP_204_NO_CONTENT)
+        except CustomUser.DoesNotExist:
+            return Response({"message": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class LogoutView(APIView):
     def post(self, request):
@@ -122,13 +134,14 @@ class ContactUsView(APIView):
 class ShippingRegView(APIView):
     def post(self, request):
         serializer = ShippingRegSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response({
-            'message': 'success',
-            'status': True,
-            'user_data': serializer.data
-        })
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                'message': 'Shipping registered successfully.',
+                'status': True,
+                'consignment_data': serializer.data
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ShippingReggetView(ListAPIView):
@@ -150,7 +163,7 @@ class ShippingRegEditView(RetrieveUpdateAPIView):
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         return Response({
-            'message': 'Profile updated successfully',
+            'message': 'Shipping Registration Data Updated Successfully',
             'status': True,
             'user_data': serializer.data
         })
@@ -161,3 +174,16 @@ class ShippingRegEditView(RetrieveUpdateAPIView):
         if not obj:
             raise NotFound('User not found!')
         return obj
+
+
+class ShippingRegistrationDeleteView(APIView):
+    def delete(self, request, pk):
+        try:
+            instance = ShippingRegistration.objects.get(pk=pk)
+            instance.delete()
+            return Response({"message": "Shipping registration deleted successfully."},
+                            status=status.HTTP_204_NO_CONTENT)
+        except ShippingRegistration.DoesNotExist:
+            return Response({"message": "Shipping registration not found."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
